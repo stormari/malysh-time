@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>МалышТайм</title>
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="./icon.png" />
+    <link rel="apple-touch-icon" href="./icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="МалышТайм" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./serviceWorker.js');
+        });
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        background: #f8fff9;
+        color: #222;
+        padding: 1rem;
+        transition: background 0.5s;
+      }
+      .morning { background-color: #fffceb; }
+      .day { background-color: #e0f7fa; }
+      .sunset { background-color: #ffe0b2; }
+      .night { background-color: #001d3d; color: #fff; }
+      h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+      button {
+        margin: 0.25rem;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        background: #a5d6a7;
+        color: #fff;
+        cursor: pointer;
+      }
+      .log { margin-top: 1.5rem; }
+      .log h2 { margin-bottom: 0.5rem; }
+      .log-entry { margin-bottom: 0.3rem; }
+    </style>
+  </head>
+  <body>
+    <h1>МалышТайм</h1>
+    <div id="date"></div>
+    <div id="buttons"></div>
+    <div class="log" id="log"></div>
+    <script>
+      const dateEl = document.getElementById('date');
+      const buttonsEl = document.getElementById('buttons');
+      const logEl = document.getElementById('log');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ru-RU', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      dateEl.textContent = dateStr;
+      const hour = now.getHours();
+      if (hour < 10) document.body.classList.add('morning');
+      else if (hour < 18) document.body.classList.add('day');
+      else if (hour < 21) document.body.classList.add('sunset');
+      else document.body.classList.add('night');
+      const events = [
+        { label: 'Ребенок проснулся' },
+        { label: 'Поел' },
+        { label: 'Уснул' },
+      ];
+      if (hour >= 21) events.push({ label: 'Ребенок уснул (ночь)' });
+      const key = `baby-log-${now.toLocaleDateString('ru-RU')}`;
+      let log = JSON.parse(localStorage.getItem(key) || '[]');
+      function save(event) {
+        const time = new Date().toLocaleTimeString();
+        const entry = `${time} — ${event}`;
+        log.push(entry);
+        localStorage.setItem(key, JSON.stringify(log));
+        renderLog();
+      }
+      function renderLog() {
+        logEl.innerHTML = '<h2>Сегодня</h2>' + log.map(e => `<div class="log-entry">${e}</div>`).join('');
+      }
+      renderLog();
+      events.forEach(({ label }) => {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.onclick = () => save(label);
+        buttonsEl.appendChild(btn);
+      });
+    </script>
+  </body>
+</html>
